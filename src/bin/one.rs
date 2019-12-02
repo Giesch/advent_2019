@@ -4,7 +4,7 @@ use itertools::iterate;
 fn main() -> StdResult<()> {
     let input = include_str!("../../data/day_one.txt");
 
-    let parsed: Result<Vec<i32>, _> = input.lines().map(|line| line.parse()).collect();
+    let parsed: Result<Vec<i32>, _> = input.trim().lines().map(|line| line.parse()).collect();
     let parsed = parsed?;
 
     let part_one = solve_part_one(&parsed);
