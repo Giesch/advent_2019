@@ -1,4 +1,5 @@
 use advent_2019::*;
+use std::collections::HashMap;
 use std::collections::HashSet;
 
 fn main() -> StdResult<()> {
@@ -8,19 +9,14 @@ fn main() -> StdResult<()> {
     let part_one = solve_part_one(&input)?;
     println!("part one: {:#?}", part_one);
 
-    let part_two = solve_part_two(input);
+    let part_two = solve_part_two(&input)?;
     println!("part two: {:#?}", part_two);
 
     Ok(())
 }
 
 fn parse_input(input: &str) -> StdResult<Vec<Vec<Command>>> {
-    let mut wires = Vec::new();
-    for line in input.lines() {
-        wires.push(parse_wire(line)?);
-    }
-
-    Ok(wires)
+    input.lines().map(parse_wire).collect()
 }
 
 #[derive(Clone, Debug)]
@@ -38,25 +34,20 @@ struct Command {
 }
 
 fn parse_wire(line: &str) -> StdResult<Vec<Command>> {
-    let mut result = Vec::new();
-    for c in line.split(",") {
-        result.push(parse_command(c)?);
-    }
-
-    Ok(result)
+    line.split(",").map(parse_command).collect()
 }
 
 fn parse_command(s: &str) -> StdResult<Command> {
     let mut chars = s.chars();
-    let l: char = chars.next().ok_or("oops")?;
-    let dist: i32 = chars.as_str().parse()?;
-    let dir: Direction = match l {
+    let first_char: char = chars.next().ok_or("no first character")?;
+    let dir: Direction = match first_char {
         'D' => Direction::Down,
         'U' => Direction::Up,
         'R' => Direction::Right,
         'L' => Direction::Left,
-        _ => panic!("invalid dir"),
+        _ => Err("invalid direction")?,
     };
+    let dist: i32 = chars.as_str().parse()?;
 
     Ok(Command { dir, dist })
 }
@@ -93,8 +84,46 @@ fn wire_path(wire: &[Command]) -> HashSet<(i32, i32)> {
     path
 }
 
-fn solve_part_two(wires: Vec<Vec<Command>>) -> i32 {
-    1
+fn solve_part_two(wires: &[Vec<Command>]) -> StdResult<i32> {
+    let first_wire_path = ordered_wire_path(&wires[0]);
+    let second_wire_path = ordered_wire_path(&wires[1]);
+
+    let first: HashSet<_> = first_wire_path.keys().collect();
+    let second: HashSet<_> = second_wire_path.keys().collect();
+    let intersections = first.intersection(&second);
+
+    let mut step_counts = Vec::new();
+    for pos in intersections {
+        let left = first_wire_path.get(&pos).ok_or("i just put this here")?;
+        let right = second_wire_path.get(&pos).ok_or("this one too")?;
+        step_counts.push(left + right);
+    }
+
+    step_counts
+        .into_iter()
+        .min()
+        .ok_or("no intersections".into())
+}
+
+fn ordered_wire_path(wire: &[Command]) -> HashMap<(i32, i32), i32> {
+    let mut path = HashMap::new();
+    let mut position = (0, 0);
+    let mut step = 0;
+
+    for command in wire {
+        for _ in 0..command.dist {
+            match command.dir {
+                Direction::Up => position.1 += 1,
+                Direction::Down => position.1 -= 1,
+                Direction::Right => position.0 += 1,
+                Direction::Left => position.0 -= 1,
+            }
+            step += 1;
+            path.insert(position, step);
+        }
+    }
+
+    path
 }
 
 #[cfg(test)]
