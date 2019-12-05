@@ -19,7 +19,7 @@ fn parse_input(input: &str) -> StdResult<Vec<Vec<Command>>> {
     input.lines().map(parse_wire).collect()
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 enum Direction {
     Up,
     Down,
@@ -27,7 +27,7 @@ enum Direction {
     Right,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 struct Command {
     dir: Direction,
     dist: i32,
