@@ -1,4 +1,5 @@
 use advent_2019::*;
+use std::cmp::Ordering;
 use std::num::ParseIntError;
 use std::ops::Add;
 use std::ops::Mul;
@@ -25,24 +26,61 @@ fn solve_part_one(program: &[usize]) -> usize {
 }
 
 fn solve_part_two(program: &[usize], target: usize) -> usize {
-    let mut left = 0;
-    let mut right = 0;
+    let mut current = 1;
+    let mut min = 1;
+    let mut max = usize::max_value();
+
+    loop {
+        let result = run_program(program, current, current);
+
+        match result.cmp(&target) {
+            Ordering::Equal => return 101 * current,
+
+            Ordering::Less => {
+                min = current;
+                if max == usize::max_value() {
+                    current *= 2;
+                } else {
+                    let jump = (max - min) / 2;
+                    if jump == 0 {
+                        return linear_search(program, current, target);
+                    }
+
+                    current += jump;
+                }
+            }
+
+            Ordering::Greater => {
+                if max == current {
+                    return linear_search(program, min, target);
+                } else {
+                    max = current;
+                    let jump = (max - min) / 2;
+                    current -= jump;
+                }
+            }
+        }
+    }
+}
+
+fn linear_search(program: &[usize], min: usize, target: usize) -> usize {
     let mut result = 0;
+    let mut noun = min;
+    let mut verb = min;
 
     while result != target {
-        result = run_program(program, left, right);
+        result = run_program(program, noun, verb);
 
         if result < target {
-            left += 1;
+            noun += 1;
         }
-
         if result > target {
-            left -= 1;
-            right += 1;
+            noun -= 1;
+            verb += 1;
         }
     }
 
-    100 * left + right
+    100 * noun + verb
 }
 
 fn run_program(program: &[usize], noun: usize, verb: usize) -> usize {
